@@ -5,3 +5,4 @@ Git tracks changes of files.
 Creating a new branch is quick.
 I created a new branch named new_dev.
 Why did there nothing happen?
+git diff
