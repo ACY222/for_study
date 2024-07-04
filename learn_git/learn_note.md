@@ -20,6 +20,11 @@ Git命令（除`git init`外）均需要在Git管理目录内执行
 8. `git reflog` 查看命令历史，以便确定要回到未来的哪个版本
 9. `git checkout -- <file>` 丢弃工作区的修改（工作区修改后还未加入暂存区时）（即用版本库里的版本替换工作取得版本）
 10. `git reset HEAD <file>` 丢弃暂存区的修改（工作区修改且加入暂存区但还没有提交时）
+11. `ssh-keygen -t rsa -C <my email>` 创建SSH密钥
+12. `git remote add origin git@server-name:path/repo-name.git`关联一个远程库。其中server-name, repo-name分别为服务器名称，远程库名称。eg：`git remote add origin git@github.com:ACY222/learngit.git`
+13. `git push origin master`推送master分支的所有内容到远程库中。若为首次推送，需要加上参数`-u`，即`git push -u origin master`
+14. `git remote -v`查看远程库信息
+15. `git remote rm <repo-name>`解除本地库和远程库的关联关系
 
 
 ## 创建版本库
@@ -112,3 +117,78 @@ eg：第一次修改->`git add`->第二次修改->`git commit` 只会提交第�
 这时，工作区和版本库不一致，有两种情况：
 1. 我确实需要从版本库中删除该文件，那就用命令`git rm <file>`删除，并且`git commit ...`，文件就从版本库中被删除
 2. 删错了，可以用命令`git checkout -- test.txt`将误删的文件恢复到最新版本
+
+## 远程仓库
+
+远程仓库是Git的杀手级功能之一。Git是分布式版本控制系统，同一个Git仓库，可以分布到不同的机器上。实际情况中，我们往往找一台电脑充当服务器的角色，每天24h开机，其他每个人 都从这个“服务器”仓库克隆(clone)一份到自己的电脑上，并且各自把各自的提交推送(push)到服务器仓库里，也从服务器仓库中拉取(pull)别人的提交。
+
+网站***GitHub***就是提供Git仓库托管服务的。而获取Git远程仓库的方式如下：
+1. 创建SSH Key。使用`ssh-keygen -t rsa -C <my email>`，然后一路回车，使用默认值即可创建。之后在用户主目录（即`~`，在Git Bash中可通过`cd ~`转到）（而不是工作区所在目录）中找到`.ssh`目录，里面有`id_rsa`和`id_rsa.pb`两个文件，这两个就是SSH Key的密钥对，前者是私钥，后者是公钥。
+2. 登录***GitHub***，打开`settings`,`SSH and GPG keys`页面，点击`New SSH key`，在Key文本框中粘贴`id_rsa.pub`文件内容后点击`Add SSH Key`即可看到已经添加的Key。(在我的计算机中，不能直接打开`id_rsa.pub`文件，可通过Git Bash中的`cat id_rsa.pub`命令或power shell中的`type id_rsa.pub`命令将该文件内容打印出来)
+
+### 添加远程库
+
+假设我们已经在本地创建了一个名为`learngit`的Git仓库，又在GitHub创建一个了一个名为`learngit`的空的Git仓库，想让两个仓库进行远程同步，这样GitHub上的仓库既可以作为备份，又可以让其他人通过该仓库来协作。
+
+接下来，我们可以在本地`learngit`仓库下运行命令：`git remote add origin git@server-name:path/repo-name.git`。添加后，远程库的名字就是`origin`，这是Git默认的叫法。
+下一步可以用命令`git push -u origin master`把本地库的所有内容推送到远程库上。
+用`git push`命令，实际上是把当前分支`master`推送到远程。
+
+由于远程库是空的，我们第一次推送`master`分支时，加上了`-u`参数，Git不但会把本地的`master`分支内容推送到远程新的`master`分支，还会把本地的`master`分支和远程的`master`关联起来，在以后的推送或拉取时就可以简化命令为`git push origin master`。
+
+### 删除远程库
+
+如果添加时地址写错了，或者是想删除远程库，可以用`git remote rm <name>`命令。使用前，可以先用`git remote -v`查看远程库信息，然后根据名字删除。
+
+注意，此处的“删除”其实时解除了本地和远程的绑定关系，并不是物理上删除了远程库，远程库本身没有任何改动。要想真正删除远程库，需要登录到GitHub中删除。
+
+### 从远程库克隆
+
+假设我们从零开发，那么最好的方式是先创建远程库，然后从远程库克隆。
+
+首先登陆GitHub，创建一个新的仓库`gitskills`。下一步用命令`git clone git@server-name:path/repo-name.git`克隆一个本地库：`git clone git@github.com:ACY222/gitskills.git`。这样，本地库中就有了远程库的文件。
+
+## 分支管理
+
+可用于多人协作——每个人克隆源码后分别完成自己的工作，完成后再合并。这样的话，当某个人的工作未完成时不会影响他人的工作。
+
+### 创建与合并分支
+
+Git将每次提交串成一条时间线，这条时间线就是一个分支。截止到目前，只有一条时间线，在Git里，这个分支叫主分支，即`master`分支。Git用`master`指向最新的提交，再用`HEAD`指向`master`，就能确定当前分支。实际上，`HEAD`指向当前分支。
+
+当我们创建新的分支如`dev`时，Git新建了一个指针叫`dev`，指向`master`相同的提交，再把`HEAD`指向`dev`，就表示当前分支在`dev`上。我们的后续操作就在`dev`分支上进行，而`master`分支保持不动。
+
+具体实现：
+1. `git branch <branch>` 创建分支
+2. `git checkout <branch>` 或 `git switch <branch>`切换分支
+3. `git checkout -b <branch>`或`git switch -c <branch>`创建+切换分支
+4. `git branch`查看已有分支，当前分支前面会标一个`*`号
+5. `git merge <branch>`合并指定分支到当前分支
+6. `git branch -d <branch>`删除指定分支
+
+### 解决冲突
+
+当我们在不同的分支中的修改产生冲突时（eg：对同一行内容修改为不同的结果），必须首先解决冲突，解决冲突后再提交，合并完成。
+
+解决冲突就是把Git合并失败的文件手动编辑为我们希望的内容，再提交。
+
+用`git log --graph`命令可以看到分支合并图。
+
+### 分支合并策略
+
+通常，合并分支时，如果可能的话，Git会使用`Fast Forward`模式，但这种模式下，删除分治后，会丢掉分支信息。
+
+如果禁用`Fast Forward`模式，Git会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。
+
+实现方式为`git merge --no-ff -m <messages> <branch>`，eg：`git merge --no-ff -m "merge with no-ff dev`
+
+#### 分治策略
+
+在实际开发中，我们应该按照几个基本原则进行分支管理：
+
+首先，`master`分支应该是非常稳定的，也就是仅用来发布新版本，平时不能在上面干活；干活都在`dev`分支上，到某个时候，比如1.0版本发布时，再把`dev`分支合并到`master`上，在`master`分支发布。
+
+我和团队成员每个人都在`dev`分支上干活，每个人都有自己的分支，时不时往`dev`分支上合并就可以。
+
+### bug分支
+
