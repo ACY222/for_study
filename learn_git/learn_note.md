@@ -22,7 +22,7 @@ Git命令（除`git init`外）均需要在Git管理目录内执行
 10. `git reset HEAD <file>` 丢弃暂存区的修改（工作区修改且加入暂存区但还没有提交时）
 11. `ssh-keygen -t rsa -C <my email>` 创建SSH密钥
 12. `git remote add origin git@server-name:path/repo-name.git`关联一个远程库。其中server-name, repo-name分别为服务器名称，远程库名称。eg：`git remote add origin git@github.com:ACY222/learngit.git`
-13. `git push origin master`推送master分支的所有内容到远程库中。若为首次推送，需要加上参数`-u`，即`git push -u origin master`
+13. `git push origin <branch>`推送分支的所有内容到远程库中。若为首次推送，需要加上参数`-u`，即`git push -u origin master`
 14. `git remote -v`查看远程库信息
 15. `git remote rm <repo-name>`解除本地库和远程库的关联关系
 16. `git branch`系列：
@@ -40,6 +40,8 @@ Git命令（除`git init`外）均需要在Git管理目录内执行
     4.  `git stash apply stash@{N}` 恢复指定工作场景但不从***stash list***中删除
     5.  `git stash drop stash@{N}` 删除***stash list***中指定工作场景，`git stash drop` 删除最近一个工作场景
 18. `git cherry-pick <commit id>` 将bug提交的修改“复制”到当前分支，避免重复劳动。
+19. `git pull`从远程抓取分支
+20. `git checkout -b <branch> origin/<branch>` 在本地创建和远程分支对应的分支
 
 
 ## 创建版本库
@@ -231,6 +233,7 @@ Git将每次提交串成一条时间线，这条时间线就是一个分支。�
 
 用`git push origin <branch>`将该分支上的所有本地提交推送到远程库。
 
+***Important***
 在工作中，并非所有分支都需要推送，一般而言：
 * `master`分支是主分支，因此要时刻与远程同步
 * `dev`分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步
@@ -239,8 +242,16 @@ Git将每次提交串成一条时间线，这条时间线就是一个分支。�
 
 #### 抓取分支
 
+多人协作时，大家都会往`master`和`dev`分支上推送各自的修改。
+当某位成员从远程库clone时，默认情况下只能看到本地的`master`分支。如果i想要在`dev`分支上开发，必须创建远程`origin`的`dev`分支到本地，可以用命令`git checkout -b dev origin/dev`。现在，他就可以在`dev`上继续修改，然后，不时把`dev`分支`push`到远程。
+
 多人协作的工作模式通常为：
 1. 首先，可以试图用`git push origin <branch>`推送自己的修改
 2. 如果推送失败，则因为远程分支比你本地的分支更新，需要先用`git pull`试图合并
 3. 如果合并有冲突，则解决冲突，并在本地提交
 4. 没有冲突或者解决掉冲突后，再用`git push origin <branch>`推送就能成功
+
+### rebase
+
+* `git rebase`命令可以把本地未push的分叉提交历史整理成直线。
+* rebase的目的是使得我们在查看历史提交的变化时更容易，因为分叉的提交需要三方对比。
