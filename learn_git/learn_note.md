@@ -25,6 +25,21 @@ Git命令（除`git init`外）均需要在Git管理目录内执行
 13. `git push origin master`推送master分支的所有内容到远程库中。若为首次推送，需要加上参数`-u`，即`git push -u origin master`
 14. `git remote -v`查看远程库信息
 15. `git remote rm <repo-name>`解除本地库和远程库的关联关系
+16. `git branch`系列：
+    1.  `git switch -c <branch>`或`git checkout -b <branch>` 创建分支
+    2.  `git switch <branch>`或`git checkout <branch>`切换分支
+    3.  `git branch` 查看当前已有分支
+    4.  `git merge <branch>` 将分支合并到当前分支
+    5.  `git merge --no-ff -m "<messages>"　<branch>` 禁止`Fast forward`的合并（可通过从分支历史上查看分支信息）
+    6.  `git branch -d <branch>` 删除分支
+        `git branch -D <branch>` 强制删除分支，用于该分支未合并就需要删除的情况。
+17. `git stash`系列：
+    1.  `git stash` 保存当前的工作场景
+    2.  `git stash list` 查询保存过的工作场景
+    3.  `git stash pop`恢复最近一次保存并将其从***stash list***中删除
+    4.  `git stash apply stash@{N}` 恢复指定工作场景但不从***stash list***中删除
+    5.  `git stash drop stash@{N}` 删除***stash list***中指定工作场景，`git stash drop` 删除最近一个工作场景
+18. `git cherry-pick <commit id>` 将bug提交的修改“复制”到当前分支，避免重复劳动。
 
 
 ## 创建版本库
@@ -192,3 +207,40 @@ Git将每次提交串成一条时间线，这条时间线就是一个分支。�
 
 ### bug分支
 
+在Git中，每个bug都可以通过一个新的临时分支来修复，修复后，合并分支，然后将临时分支删除。
+
+当我接到一个修复一个代号为101的bug的任务时，我可以使用命令`git stash`将当前工作现场储存，然后回到分支`master`创建并切换到新分支`issue-101`来修复bug，修复完成并提交后，回到`master`合并该分支。
+接着，回到`dev`，利用`git stash list`查询保存过的工作现场，再用命令`git stash pop`恢复并删除最近一次保存，也可用`git stash apply stash@{N}`恢复指定的stash(但不删除)。若想要删除某个stash，可使用`git stash drop stash@{N}`删除对应stash或`git stash drop`删除最近的stash。
+回到该stash后，我们发现，dev分支时早期从master分支分出来的，所以master上存在的bug在当前的dev上也存在，同样的bug，我们只需要把master中修复该bug的提交复制到dev分支上，只需使用命令`git cherry-pick <commit id>`。
+
+### Feature分支
+
+软件开发中，总有无穷无尽的新功能要不断添加进来。添加新功能时，最好新建一个feature分支，在上面开发后合并，最后删除该分支。
+
+当你完成一个feature分支但又不需要该功能时，如果需要销毁该分支，可以使用`git branch -D <branch>`强制删除。
+
+当然，如果不是必须删除的话，最好保留该分支，防止某天boss突发奇想要重新启动该计划。
+
+### 多人协作
+ 
+从远程仓库克隆时，实际上Git自动把本地的`master`分支和远程的`master`分支对应起来了，且远程仓库的默认名称是`origin`。
+
+要查看远程库的信息，用`git remote`，或`git remote -v`显示更详细的信息。
+
+#### 推送分支
+
+用`git push origin <branch>`将该分支上的所有本地提交推送到远程库。
+
+在工作中，并非所有分支都需要推送，一般而言：
+* `master`分支是主分支，因此要时刻与远程同步
+* `dev`分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步
+* bug分支只用在本地修复bug，不需要推到远程
+* feature分支是否推到远程，取决于是否和团队合作在上面开发
+
+#### 抓取分支
+
+多人协作的工作模式通常为：
+1. 首先，可以试图用`git push origin <branch>`推送自己的修改
+2. 如果推送失败，则因为远程分支比你本地的分支更新，需要先用`git pull`试图合并
+3. 如果合并有冲突，则解决冲突，并在本地提交
+4. 没有冲突或者解决掉冲突后，再用`git push origin <branch>`推送就能成功
