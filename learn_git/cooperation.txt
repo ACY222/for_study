@@ -1,3 +1,0 @@
-Member1: write a line.
-Member1: write another line.
-Member2: add one line.
